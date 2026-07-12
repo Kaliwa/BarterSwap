@@ -1,0 +1,23 @@
+# Compiled binary
+/barterswap
+*.exe
+*.out
+*.test
+
+# Go workspace / vendor
+/vendor/
+go.work
+go.work.sum
+
+# Environment
+.env
+
+# Coverage
+coverage.out
+coverage.html
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store

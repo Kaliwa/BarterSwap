@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+*.md
+/barterswap
+coverage.out
+coverage.html
+.idea/
+.vscode/
