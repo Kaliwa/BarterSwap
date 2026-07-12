@@ -40,13 +40,61 @@ go mod tidy
 go run .
 ```
 
+## Authentification
+
+Pas de système avancé : les endpoints qui modifient une ressource attendent un
+header `X-User-ID` identifiant l'appelant. Un utilisateur ne peut modifier que
+ses propres données.
+
 ## Endpoints
 
-_(Tableau récapitulatif à compléter au fil de l'implémentation.)_
+### Gestion des utilisateurs
+
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| `GET`  | `/health`                  | –          | Vérifier que l'API répond |
+| `POST` | `/api/users`               | –          | Créer un compte (10 crédits de bienvenue) |
+| `GET`  | `/api/users/{id}`          | –          | Profil public d'un utilisateur |
+| `PUT`  | `/api/users/{id}`          | `X-User-ID` | Modifier son profil |
+| `GET`  | `/api/users/{id}/skills`   | –          | Compétences d'un utilisateur |
+| `PUT`  | `/api/users/{id}/skills`   | `X-User-ID` | Définir ses compétences (écrase tout) |
+
+Niveaux de compétence acceptés : `débutant`, `intermédiaire`, `expert`.
+
+_Services, échanges, évaluations et statistiques : à venir._
 
 ## Exemples d'utilisation
 
-_(3-4 exemples complets avec curl à venir.)_
+Créer un compte :
+
+```bash
+curl -X POST http://localhost:8080/api/users \
+  -H 'Content-Type: application/json' \
+  -d '{"pseudo":"alice","bio":"Jardinière passionnée","ville":"Lyon"}'
+# 201 → {"id":1,"pseudo":"alice",...,"credit_balance":10,"created_at":"..."}
+```
+
+Consulter un profil public :
+
+```bash
+curl http://localhost:8080/api/users/1
+```
+
+Mettre à jour son profil (authentifié) :
+
+```bash
+curl -X PUT http://localhost:8080/api/users/1 \
+  -H 'X-User-ID: 1' -H 'Content-Type: application/json' \
+  -d '{"pseudo":"alice","bio":"Nouvelle bio","ville":"Paris"}'
+```
+
+Définir ses compétences (remplace la liste existante) :
+
+```bash
+curl -X PUT http://localhost:8080/api/users/1/skills \
+  -H 'X-User-ID: 1' -H 'Content-Type: application/json' \
+  -d '[{"nom":"Jardinage","niveau":"expert"},{"nom":"Cuisine","niveau":"débutant"}]'
+```
 
 ## Tests
 

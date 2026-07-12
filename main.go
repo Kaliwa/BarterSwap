@@ -1,30 +1,66 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", handleHealth)
-
-	log.Printf("BarterSwap API listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("server error: %v", err)
+	if err := run(); err != nil {
+		log.Fatal(err)
 	}
 }
 
-// handleHealth is a simple liveness endpoint used to check the service is up.
-func handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+// run wires the layers together and serves until interrupted.
+func run() error {
+	dsn := env("DATABASE_URL", "postgres://barterswap:barterswap@localhost:5432/barterswap?sslmode=disable")
+	port := env("PORT", "8080")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	store, err := NewStore(ctx, dsn)
+	if err != nil {
+		return err
+	}
+	defer store.Close()
+
+	server := NewServer(NewService(store))
+
+	httpServer := &http.Server{
+		Addr:              ":" + port,
+		Handler:           server,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	// Graceful shutdown on SIGINT/SIGTERM.
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		<-sigCh
+		log.Println("arrêt en cours...")
+		shutdownCtx, stop := context.WithTimeout(context.Background(), 10*time.Second)
+		defer stop()
+		_ = httpServer.Shutdown(shutdownCtx)
+	}()
+
+	log.Printf("BarterSwap API à l'écoute sur :%s", port)
+	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+// env returns the environment variable or a fallback when unset.
+func env(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
