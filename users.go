@@ -5,25 +5,14 @@ import (
 	"strings"
 )
 
-// Service holds the business logic. It validates input and enforces the domain
-// rules, delegating persistence to the Store. It knows nothing about HTTP.
-type Service struct {
-	store *Store
-}
-
-// NewService wires a Service to its Store.
-func NewService(store *Store) *Service {
-	return &Service{store: store}
-}
-
 // RegisterUser validates and creates a new account (welcome credits are granted
 // by the store).
-func (svc *Service) RegisterUser(ctx context.Context, input User) (User, error) {
+func (a *App) RegisterUser(ctx context.Context, input User) (User, error) {
 	pseudo := strings.TrimSpace(input.Pseudo)
 	if pseudo == "" {
 		return User{}, &ValidationError{Field: "pseudo", Message: "le pseudo est obligatoire"}
 	}
-	return svc.store.CreateUser(ctx, User{
+	return a.store.CreateUser(ctx, User{
 		Pseudo: pseudo,
 		Bio:    strings.TrimSpace(input.Bio),
 		Ville:  strings.TrimSpace(input.Ville),
@@ -31,12 +20,12 @@ func (svc *Service) RegisterUser(ctx context.Context, input User) (User, error) 
 }
 
 // GetUser returns a public profile.
-func (svc *Service) GetUser(ctx context.Context, id int) (User, error) {
-	return svc.store.GetUser(ctx, id)
+func (a *App) GetUser(ctx context.Context, id int) (User, error) {
+	return a.store.GetUser(ctx, id)
 }
 
 // UpdateUser lets a user edit their own profile only.
-func (svc *Service) UpdateUser(ctx context.Context, actorID, id int, input User) (User, error) {
+func (a *App) UpdateUser(ctx context.Context, actorID, id int, input User) (User, error) {
 	if actorID != id {
 		return User{}, ErrForbidden
 	}
@@ -44,7 +33,7 @@ func (svc *Service) UpdateUser(ctx context.Context, actorID, id int, input User)
 	if pseudo == "" {
 		return User{}, &ValidationError{Field: "pseudo", Message: "le pseudo est obligatoire"}
 	}
-	return svc.store.UpdateUser(ctx, User{
+	return a.store.UpdateUser(ctx, User{
 		ID:     id,
 		Pseudo: pseudo,
 		Bio:    strings.TrimSpace(input.Bio),
@@ -53,23 +42,23 @@ func (svc *Service) UpdateUser(ctx context.Context, actorID, id int, input User)
 }
 
 // GetUserSkills returns the skills of an existing user.
-func (svc *Service) GetUserSkills(ctx context.Context, id int) ([]Skill, error) {
-	exists, err := svc.store.UserExists(ctx, id)
+func (a *App) GetUserSkills(ctx context.Context, id int) ([]Skill, error) {
+	exists, err := a.store.UserExists(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
 		return nil, ErrNotFound
 	}
-	return svc.store.GetUserSkills(ctx, id)
+	return a.store.GetUserSkills(ctx, id)
 }
 
 // SetUserSkills validates then replaces the skills of the caller's own account.
-func (svc *Service) SetUserSkills(ctx context.Context, actorID, id int, skills []Skill) ([]Skill, error) {
+func (a *App) SetUserSkills(ctx context.Context, actorID, id int, skills []Skill) ([]Skill, error) {
 	if actorID != id {
 		return nil, ErrForbidden
 	}
-	exists, err := svc.store.UserExists(ctx, id)
+	exists, err := a.store.UserExists(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +78,8 @@ func (svc *Service) SetUserSkills(ctx context.Context, actorID, id int, skills [
 		cleaned = append(cleaned, Skill{Nom: nom, Niveau: sk.Niveau})
 	}
 
-	if err := svc.store.SetUserSkills(ctx, id, cleaned); err != nil {
+	if err := a.store.SetUserSkills(ctx, id, cleaned); err != nil {
 		return nil, err
 	}
-	return svc.store.GetUserSkills(ctx, id)
+	return a.store.GetUserSkills(ctx, id)
 }

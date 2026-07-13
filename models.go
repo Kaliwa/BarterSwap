@@ -36,3 +36,42 @@ type Skill struct {
 	Nom    string `json:"nom"`
 	Niveau string `json:"niveau"`
 }
+
+// validCategories is the closed set of service categories.
+var validCategories = map[string]bool{
+	"Informatique": true,
+	"Jardinage":    true,
+	"Bricolage":    true,
+	"Cuisine":      true,
+	"Musique":      true,
+	"Langues":      true,
+	"Sport":        true,
+	"Tutorat":      true,
+	"Déménagement": true,
+	"Photographie": true,
+	"Animalier":    true,
+	"Couture":      true,
+	"Autre":        true,
+}
+
+// Service is a public announcement: a member offers a service tied to one of
+// their skills, priced in time-credits.
+type Service struct {
+	ID           int    `json:"id"`
+	ProviderID   int    `json:"provider_id"`
+	Titre        string `json:"titre"`
+	Description  string `json:"description,omitempty"`
+	Categorie    string `json:"categorie"`
+	DureeMinutes int    `json:"duree_minutes"`
+	Credits      int    `json:"credits"`
+	Ville        string `json:"ville,omitempty"`
+	Actif        bool   `json:"actif"`
+	CreatedAt    string `json:"created_at"`
+}
+
+// ServiceFilter holds the optional, server-side filters for listing services.
+type ServiceFilter struct {
+	Categorie string
+	Ville     string
+	Search    string
+}

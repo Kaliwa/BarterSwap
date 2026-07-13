@@ -11,22 +11,29 @@ import (
 // Server is the HTTP layer. Handlers only parse requests, call the Service and
 // write responses; they hold no business rules.
 type Server struct {
-	svc     *Service
+	app     *App
 	handler http.Handler
 }
 
 // NewServer builds the router, wires the middleware chain and returns a Server
 // usable as an http.Handler.
-func NewServer(svc *Service) *Server {
-	s := &Server{svc: svc}
+func NewServer(app *App) *Server {
+	s := &Server{app: app}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.handleHealth)
+
 	mux.HandleFunc("POST /api/users", s.handleCreateUser)
 	mux.HandleFunc("GET /api/users/{id}", s.handleGetUser)
 	mux.HandleFunc("PUT /api/users/{id}", s.handleUpdateUser)
 	mux.HandleFunc("GET /api/users/{id}/skills", s.handleGetUserSkills)
 	mux.HandleFunc("PUT /api/users/{id}/skills", s.handleSetUserSkills)
+
+	mux.HandleFunc("GET /api/services", s.handleListServices)
+	mux.HandleFunc("POST /api/services", s.handleCreateService)
+	mux.HandleFunc("GET /api/services/{id}", s.handleGetService)
+	mux.HandleFunc("PUT /api/services/{id}", s.handleUpdateService)
+	mux.HandleFunc("DELETE /api/services/{id}", s.handleDeleteService)
 
 	// Outermost first: log wraps everything, recover catches handler panics,
 	// cors sets the headers.

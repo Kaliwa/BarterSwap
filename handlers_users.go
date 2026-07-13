@@ -9,7 +9,7 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err)
 		return
 	}
-	user, err := s.svc.RegisterUser(r.Context(), input)
+	user, err := s.app.RegisterUser(r.Context(), input)
 	if err != nil {
 		respondError(w, err)
 		return
@@ -24,7 +24,7 @@ func (s *Server) handleGetUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err)
 		return
 	}
-	user, err := s.svc.GetUser(r.Context(), id)
+	user, err := s.app.GetUser(r.Context(), id)
 	if err != nil {
 		respondError(w, err)
 		return
@@ -49,7 +49,7 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err)
 		return
 	}
-	user, err := s.svc.UpdateUser(r.Context(), actor, id, input)
+	user, err := s.app.UpdateUser(r.Context(), actor, id, input)
 	if err != nil {
 		respondError(w, err)
 		return
@@ -64,7 +64,7 @@ func (s *Server) handleGetUserSkills(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err)
 		return
 	}
-	skills, err := s.svc.GetUserSkills(r.Context(), id)
+	skills, err := s.app.GetUserSkills(r.Context(), id)
 	if err != nil {
 		respondError(w, err)
 		return
@@ -89,7 +89,7 @@ func (s *Server) handleSetUserSkills(w http.ResponseWriter, r *http.Request) {
 		respondError(w, err)
 		return
 	}
-	updated, err := s.svc.SetUserSkills(r.Context(), actor, id, skills)
+	updated, err := s.app.SetUserSkills(r.Context(), actor, id, skills)
 	if err != nil {
 		respondError(w, err)
 		return

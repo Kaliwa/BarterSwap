@@ -83,8 +83,24 @@ CREATE TABLE IF NOT EXISTS credit_transactions (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS services (
+    id            SERIAL PRIMARY KEY,
+    provider_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    titre         TEXT NOT NULL,
+    description   TEXT NOT NULL DEFAULT '',
+    categorie     TEXT NOT NULL,
+    duree_minutes INTEGER NOT NULL,
+    credits       INTEGER NOT NULL,
+    ville         TEXT NOT NULL DEFAULT '',
+    actif         BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_skills_user ON skills(user_id);
 CREATE INDEX IF NOT EXISTS idx_credit_tx_user ON credit_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_services_provider ON services(provider_id);
+CREATE INDEX IF NOT EXISTS idx_services_categorie ON services(categorie);
+CREATE INDEX IF NOT EXISTS idx_services_ville ON services(ville);
 `
 
 func (s *Store) migrate(ctx context.Context) error {

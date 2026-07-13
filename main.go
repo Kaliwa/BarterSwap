@@ -31,7 +31,7 @@ func run() error {
 	}
 	defer store.Close()
 
-	server := NewServer(NewService(store))
+	server := NewServer(NewApp(store))
 
 	httpServer := &http.Server{
 		Addr:              ":" + port,

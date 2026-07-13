@@ -61,7 +61,26 @@ ses propres données.
 
 Niveaux de compétence acceptés : `débutant`, `intermédiaire`, `expert`.
 
-_Services, échanges, évaluations et statistiques : à venir._
+### Annonces de services
+
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| `GET`    | `/api/services`      | –          | Liste des annonces (filtres optionnels) |
+| `POST`   | `/api/services`      | `X-User-ID` | Créer une annonce |
+| `GET`    | `/api/services/{id}` | –          | Détail d'une annonce |
+| `PUT`    | `/api/services/{id}` | `X-User-ID` | Modifier son annonce |
+| `DELETE` | `/api/services/{id}` | `X-User-ID` | Supprimer son annonce |
+
+Filtres cumulables (côté serveur) : `?categorie=`, `?ville=`, `?search=`.
+
+Catégories (liste fermée) : `Informatique`, `Jardinage`, `Bricolage`, `Cuisine`,
+`Musique`, `Langues`, `Sport`, `Tutorat`, `Déménagement`, `Photographie`,
+`Animalier`, `Couture`, `Autre`.
+
+> Pour publier une annonce dans une catégorie, l'utilisateur doit avoir déclaré
+> une compétence portant le même nom que la catégorie.
+
+_Échanges, évaluations et statistiques : à venir._
 
 ## Exemples d'utilisation
 
@@ -94,6 +113,21 @@ Définir ses compétences (remplace la liste existante) :
 curl -X PUT http://localhost:8080/api/users/1/skills \
   -H 'X-User-ID: 1' -H 'Content-Type: application/json' \
   -d '[{"nom":"Jardinage","niveau":"expert"},{"nom":"Cuisine","niveau":"débutant"}]'
+```
+
+Publier une annonce de service :
+
+```bash
+curl -X POST http://localhost:8080/api/services \
+  -H 'X-User-ID: 1' -H 'Content-Type: application/json' \
+  -d '{"titre":"Taille de haies","categorie":"Jardinage","duree_minutes":90,"credits":2,"ville":"Lyon"}'
+```
+
+Rechercher / filtrer les annonces :
+
+```bash
+curl 'http://localhost:8080/api/services?categorie=Jardinage&ville=Lyon'
+curl 'http://localhost:8080/api/services?search=haies'
 ```
 
 ## Tests
