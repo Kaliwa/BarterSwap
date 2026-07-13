@@ -75,3 +75,28 @@ type ServiceFilter struct {
 	Ville     string
 	Search    string
 }
+
+// Exchange statuses and their lifecycle:
+//
+//	pending → accepted → completed
+//	   ↓         ↓
+//	rejected  cancelled
+const (
+	statusPending   = "pending"
+	statusAccepted  = "accepted"
+	statusRejected  = "rejected"
+	statusCancelled = "cancelled"
+	statusCompleted = "completed"
+)
+
+// Exchange is a reservation between a requester (who asks) and the service
+// owner (who offers).
+type Exchange struct {
+	ID          int    `json:"id"`
+	ServiceID   int    `json:"service_id"`
+	RequesterID int    `json:"requester_id"`
+	OwnerID     int    `json:"owner_id"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}

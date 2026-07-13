@@ -35,6 +35,14 @@ func NewServer(app *App) *Server {
 	mux.HandleFunc("PUT /api/services/{id}", s.handleUpdateService)
 	mux.HandleFunc("DELETE /api/services/{id}", s.handleDeleteService)
 
+	mux.HandleFunc("POST /api/exchanges", s.handleCreateExchange)
+	mux.HandleFunc("GET /api/exchanges", s.handleListExchanges)
+	mux.HandleFunc("GET /api/exchanges/{id}", s.handleGetExchange)
+	mux.HandleFunc("PUT /api/exchanges/{id}/accept", s.handleAcceptExchange)
+	mux.HandleFunc("PUT /api/exchanges/{id}/reject", s.handleRejectExchange)
+	mux.HandleFunc("PUT /api/exchanges/{id}/complete", s.handleCompleteExchange)
+	mux.HandleFunc("PUT /api/exchanges/{id}/cancel", s.handleCancelExchange)
+
 	// Outermost first: log wraps everything, recover catches handler panics,
 	// cors sets the headers.
 	s.handler = chain(mux, logMiddleware, recoverMiddleware, corsMiddleware)

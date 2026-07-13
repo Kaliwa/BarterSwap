@@ -9,10 +9,11 @@ import (
 // Sentinel errors shared across the business layer. Handlers translate them
 // into HTTP status codes via httpStatus.
 var (
-	ErrNotFound     = errors.New("ressource introuvable")
-	ErrUnauthorized = errors.New("authentification requise")
-	ErrForbidden    = errors.New("action non autorisée")
-	ErrConflict     = errors.New("conflit avec l'état actuel")
+	ErrNotFound            = errors.New("ressource introuvable")
+	ErrUnauthorized        = errors.New("authentification requise")
+	ErrForbidden           = errors.New("action non autorisée")
+	ErrConflict            = errors.New("conflit avec l'état actuel")
+	ErrInsufficientCredits = errors.New("crédits insuffisants")
 )
 
 // ValidationError signals invalid client input and maps to HTTP 400.
@@ -33,6 +34,8 @@ func httpStatus(err error) int {
 	var ve *ValidationError
 	switch {
 	case errors.As(err, &ve):
+		return http.StatusBadRequest
+	case errors.Is(err, ErrInsufficientCredits):
 		return http.StatusBadRequest
 	case errors.Is(err, ErrNotFound):
 		return http.StatusNotFound

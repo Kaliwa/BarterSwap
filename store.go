@@ -98,9 +98,26 @@ CREATE TABLE IF NOT EXISTS services (
 
 CREATE INDEX IF NOT EXISTS idx_skills_user ON skills(user_id);
 CREATE INDEX IF NOT EXISTS idx_credit_tx_user ON credit_transactions(user_id);
+CREATE TABLE IF NOT EXISTS exchanges (
+    id           SERIAL PRIMARY KEY,
+    service_id   INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    owner_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status       TEXT NOT NULL DEFAULT 'pending',
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS idx_services_provider ON services(provider_id);
 CREATE INDEX IF NOT EXISTS idx_services_categorie ON services(categorie);
 CREATE INDEX IF NOT EXISTS idx_services_ville ON services(ville);
+CREATE INDEX IF NOT EXISTS idx_exchanges_requester ON exchanges(requester_id);
+CREATE INDEX IF NOT EXISTS idx_exchanges_owner ON exchanges(owner_id);
+
+-- Enforces "one active exchange per service" (rule 2) at the database level,
+-- so concurrency is handled without any mutex.
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_exchange_per_service
+    ON exchanges(service_id) WHERE status IN ('pending', 'accepted');
 `
 
 func (s *Store) migrate(ctx context.Context) error {

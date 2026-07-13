@@ -80,7 +80,39 @@ Catégories (liste fermée) : `Informatique`, `Jardinage`, `Bricolage`, `Cuisine
 > Pour publier une annonce dans une catégorie, l'utilisateur doit avoir déclaré
 > une compétence portant le même nom que la catégorie.
 
-_Échanges, évaluations et statistiques : à venir._
+### Système d'échange
+
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| `POST` | `/api/exchanges`               | `X-User-ID` | Créer une demande d'échange |
+| `GET`  | `/api/exchanges`               | `X-User-ID` | Ses échanges (demandés + reçus), filtre `?status=` |
+| `GET`  | `/api/exchanges/{id}`          | `X-User-ID` | Détail (participants uniquement) |
+| `PUT`  | `/api/exchanges/{id}/accept`   | `X-User-ID` | Accepter (offreur) |
+| `PUT`  | `/api/exchanges/{id}/reject`   | `X-User-ID` | Refuser (offreur) |
+| `PUT`  | `/api/exchanges/{id}/complete` | `X-User-ID` | Terminer (un participant) |
+| `PUT`  | `/api/exchanges/{id}/cancel`   | `X-User-ID` | Annuler (un participant) |
+
+Cycle de vie :
+
+```
+pending ──accept──► accepted ──complete──► completed
+   │                   │
+ reject              cancel
+   ▼                   ▼
+rejected           cancelled
+```
+
+Crédits-temps (gérés comme un **journal de transactions**) :
+
+- à l'**acceptation** : crédits **bloqués** (débités du demandeur)
+- à la **complétion** : crédits **transférés** définitivement à l'offreur
+- à l'**annulation / refus** : crédits bloqués **restitués** au demandeur
+
+Règles : on ne peut pas s'échanger son propre service, un service n'a qu'un seul
+échange actif (`pending`/`accepted`) à la fois, et il faut assez de crédits pour
+lancer une demande.
+
+_Évaluations et statistiques : à venir._
 
 ## Exemples d'utilisation
 
@@ -128,6 +160,21 @@ Rechercher / filtrer les annonces :
 ```bash
 curl 'http://localhost:8080/api/services?categorie=Jardinage&ville=Lyon'
 curl 'http://localhost:8080/api/services?search=haies'
+```
+
+Demander puis accepter un échange :
+
+```bash
+# le demandeur (user 2) réserve le service 1
+curl -X POST http://localhost:8080/api/exchanges \
+  -H 'X-User-ID: 2' -H 'Content-Type: application/json' \
+  -d '{"service_id":1}'
+
+# l'offreur (user 1) accepte → crédits bloqués
+curl -X PUT http://localhost:8080/api/exchanges/1/accept -H 'X-User-ID: 1'
+
+# une fois le service rendu → crédits transférés
+curl -X PUT http://localhost:8080/api/exchanges/1/complete -H 'X-User-ID: 2'
 ```
 
 ## Tests

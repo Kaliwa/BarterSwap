@@ -63,7 +63,8 @@ func (a *App) UpdateService(ctx context.Context, actorID, id int, input Service)
 	})
 }
 
-// DeleteService lets a provider remove their own announcement only.
+// DeleteService lets a provider remove their own announcement, unless it still
+// has an ongoing exchange.
 func (a *App) DeleteService(ctx context.Context, actorID, id int) error {
 	existing, err := a.store.GetService(ctx, id)
 	if err != nil {
@@ -71,6 +72,13 @@ func (a *App) DeleteService(ctx context.Context, actorID, id int) error {
 	}
 	if existing.ProviderID != actorID {
 		return ErrForbidden
+	}
+	active, err := a.store.HasActiveExchange(ctx, id)
+	if err != nil {
+		return err
+	}
+	if active {
+		return ErrConflict
 	}
 	return a.store.DeleteService(ctx, id)
 }
