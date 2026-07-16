@@ -118,6 +118,22 @@ CREATE INDEX IF NOT EXISTS idx_exchanges_owner ON exchanges(owner_id);
 -- so concurrency is handled without any mutex.
 CREATE UNIQUE INDEX IF NOT EXISTS uniq_active_exchange_per_service
     ON exchanges(service_id) WHERE status IN ('pending', 'accepted');
+
+-- UNIQUE on exchange_id enforces "one review per exchange" at the database
+-- level; the CHECK keeps the note in the 1-5 range even outside the API.
+CREATE TABLE IF NOT EXISTS reviews (
+    id          SERIAL PRIMARY KEY,
+    exchange_id INTEGER NOT NULL UNIQUE REFERENCES exchanges(id) ON DELETE CASCADE,
+    service_id  INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    reviewer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reviewee_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    note        INTEGER NOT NULL CHECK (note BETWEEN 1 AND 5),
+    commentaire TEXT NOT NULL DEFAULT '',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewee ON reviews(reviewee_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_service ON reviews(service_id);
 `
 
 func (s *Store) migrate(ctx context.Context) error {

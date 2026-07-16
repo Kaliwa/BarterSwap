@@ -89,6 +89,39 @@ const (
 	statusCompleted = "completed"
 )
 
+// Review bounds for the 1-5 rating scale.
+const (
+	minNote = 1
+	maxNote = 5
+)
+
+// Review is the rating left by the requester on a completed exchange. It is
+// immutable: no update nor delete once posted, and one review per exchange.
+type Review struct {
+	ID          int    `json:"id"`
+	ExchangeID  int    `json:"exchange_id"`
+	ServiceID   int    `json:"service_id"`
+	ReviewerID  int    `json:"reviewer_id"`
+	RevieweeID  int    `json:"reviewee_id"`
+	Note        int    `json:"note"`
+	Commentaire string `json:"commentaire,omitempty"`
+	CreatedAt   string `json:"created_at"`
+}
+
+// UserStats aggregates a user's activity: credit balance, completed exchanges
+// (as requester or owner), active service announcements, average rating
+// received and credits earned/spent through exchanges.
+type UserStats struct {
+	UserID             int     `json:"user_id"`
+	CreditBalance      int     `json:"credit_balance"`
+	CompletedExchanges int     `json:"completed_exchanges"`
+	ActiveServices     int     `json:"active_services"`
+	AverageRating      float64 `json:"average_rating"`
+	ReviewCount        int     `json:"review_count"`
+	TotalEarned        int     `json:"total_earned"`
+	TotalSpent         int     `json:"total_spent"`
+}
+
 // Exchange is a reservation between a requester (who asks) and the service
 // owner (who offers).
 type Exchange struct {

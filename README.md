@@ -112,7 +112,32 @@ Règles : on ne peut pas s'échanger son propre service, un service n'a qu'un se
 échange actif (`pending`/`accepted`) à la fois, et il faut assez de crédits pour
 lancer une demande.
 
-_Évaluations et statistiques : à venir._
+### Évaluations
+
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| `POST` | `/api/exchanges/{id}/review` | `X-User-ID` | Noter un échange terminé (note 1-5, commentaire optionnel) |
+| `GET`  | `/api/users/{id}/reviews`    | –          | Avis reçus par un utilisateur |
+| `GET`  | `/api/services/{id}/reviews` | –          | Avis sur un service |
+
+Règles :
+
+- seul le **demandeur** peut noter, et l'avis cible l'offreur ;
+- l'échange doit être **`completed`** (sinon `400`) ;
+- **un seul avis par échange** (sinon `409`), garanti par une contrainte `UNIQUE` ;
+- un avis est **immuable** : ni modification ni suppression.
+
+### Statistiques
+
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| `GET` | `/api/users/{id}/stats` | – | Résumé d'activité d'un utilisateur |
+
+Le résumé (`UserStats`) contient : solde de crédits, nombre d'échanges complétés
+(demandés + rendus), nombre d'annonces actives, note moyenne reçue (arrondie à
+2 décimales, `0` sans avis) avec le nombre d'avis, total de crédits **gagnés**
+via les échanges (hors crédits de bienvenue) et total **dépensés** (net des
+restitutions).
 
 ## Exemples d'utilisation
 
@@ -177,8 +202,41 @@ curl -X PUT http://localhost:8080/api/exchanges/1/accept -H 'X-User-ID: 1'
 curl -X PUT http://localhost:8080/api/exchanges/1/complete -H 'X-User-ID: 2'
 ```
 
+Noter l'échange terminé puis consulter les avis et les statistiques :
+
+```bash
+# le demandeur (user 2) note l'échange 1
+curl -X POST http://localhost:8080/api/exchanges/1/review \
+  -H 'X-User-ID: 2' -H 'Content-Type: application/json' \
+  -d '{"note":5,"commentaire":"Haies impeccables !"}'
+
+curl http://localhost:8080/api/users/1/reviews     # avis reçus par l'offreur
+curl http://localhost:8080/api/services/1/reviews  # avis sur le service
+curl http://localhost:8080/api/users/1/stats       # résumé d'activité
+```
+
 ## Tests
 
 ```bash
 go test -v -cover ./...
+```
+
+Deux familles de tests :
+
+- **Tests unitaires** (`httptest` + table-driven) : toute la pile HTTP + métier
+  est exercée à travers le routeur, avec un **fake store** en mémoire. La couche
+  métier dépend de l'interface `Storer` (définie côté consommateur dans
+  `app.go`), ce qui permet de tester la logique sans base de données.
+- **Tests d'intégration** (`store_integration_test.go`) : la couche stockage
+  réelle (transactions, verrous, contraintes d'unicité) est testée contre
+  PostgreSQL, dans une base dédiée `barterswap_test` créée à la volée. Ils sont
+  **sautés automatiquement** si la base est injoignable.
+
+Pour la couverture complète (> 80 %), lancer les tests avec la base démarrée :
+
+```bash
+docker compose up -d db
+go test -cover ./...
+# ou avec une base sur un autre port :
+DATABASE_URL='postgres://barterswap:barterswap@localhost:5433/barterswap?sslmode=disable' go test -cover ./...
 ```
