@@ -96,7 +96,7 @@ func (s *Server) runExchangeAction(w http.ResponseWriter, r *http.Request, actio
 		return
 	}
 	writeJSON(w, http.StatusOK, ex)
-}git
+}
 
 // authAndID resolves both the caller identity and the {id} path parameter.
 func authAndID(r *http.Request) (int, int, error) {
